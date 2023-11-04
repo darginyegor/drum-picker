@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#131313" />
+    <title>Барабан</title>
+  </head>
+  <body>
+    <img src="dummy.png" class="header" alt="" onclick="window.location.reload(true)" />
+    <div class="setup">Лучшее средство от диареи — это</div>
+    <div class="punchlines">
+      <div class="punchline">хлорка</div>
+      <div class="punchline">член</div>
+      <div class="punchline">50 мг Золофта</div>
+      <div class="punchline">евреи</div>
+      <div class="punchline">Путин</div>
+      <div class="punchline">коррупция</div>
+      <div class="punchline">сквирт</div>
+      <div class="punchline">расчленение</div>
+      <div class="punchline">мои яйца</div>
+    </div>
+  </body>
+  <style>
+    @keyframes fly-in {
+      0% {
+        transform: translateY(50vh) scale(0);
+        opacity: 0;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      max-width: 400px;
+      max-height: 800px;
+      margin: auto;
+      padding: 32px;
+      font-family: sans-serif;
+      font-weight: 300;
+      background-color: #131313;
+      color: #f6f6f6;
+      font-size: 48px;
+      line-height: 1;
+      overscroll-behavior: none;
+    }
+
+    .setup {
+      margin-bottom: 40px;
+      margin-top: 40px;
+      display: block;
+    }
+
+    .punchlines {
+      overflow: hidden;
+      max-height: 360px;
+    }
+
+    .punchline {
+      user-select: none;
+      transform-origin: top left;
+      margin-bottom: 12px;
+      animation: fly-in 0.5s both;
+    }
+  </style>
+  <script>
+    const elementHeight = 60;
+    const container = document.querySelector(".punchlines");
+    const children = container.children;
+    const containerY = container.getBoundingClientRect().y;
+    const containerHeight = elementHeight * children.length;
+
+    let initialOffsetY = 0;
+    let endDragPosition = 0;
+    let lastTouchPosition = 0;
+    let speed = 0;
+
+    const dragEventHandler = function (event) {
+      const newOffsetY = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
+      setStyles(newOffsetY);
+      speed = (event.changedTouches[0].clientY - lastTouchPosition) * 25;
+      lastTouchPosition = event.changedTouches[0].clientY;
+    };
+
+    container.addEventListener("touchstart", function (event) {
+      initialOffsetY = event.touches[0].clientY;
+      lastTouchPosition = initialOffsetY;
+      event.preventDefault();
+      document.addEventListener("touchmove", dragEventHandler);
+    });
+
+    document.addEventListener("touchend", function (event) {
+      document.removeEventListener("touchmove", dragEventHandler);
+
+      const byInersia = () => {
+        requestAnimationFrame(() => {
+          const newOffsetY =
+            event.changedTouches[0].clientY - initialOffsetY + endDragPosition - speed;
+          setStyles(newOffsetY);
+          if (Math.abs(speed) > 0.5) {
+            speed *= 0.9;
+            byInersia();
+          } else {
+            endDragPosition = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
+            if (endDragPosition > containerHeight - elementHeight) {
+              endDragPosition = endDragPosition % containerHeight;
+            }
+            if (-endDragPosition > containerHeight - elementHeight) {
+              endDragPosition = endDragPosition + containerHeight;
+            }
+            endDragPosition = roundToelementHeight(endDragPosition);
+            setStyles(endDragPosition);
+          }
+        });
+      };
+
+      byInersia();
+    });
+
+    function roundToelementHeight(number) {
+      return Math.round(number / elementHeight) * elementHeight;
+    }
+
+    function setStyles(offset) {
+      for (let i = 0; i < children.length; i++) {
+        const child = children.item(i);
+        const childPositionY = i * elementHeight + offset;
+        let childOffset = offset;
+        if (childPositionY >= containerHeight - elementHeight) {
+          childOffset = childOffset - containerHeight;
+        }
+        if (childPositionY < -elementHeight) {
+          childOffset = childOffset + containerHeight;
+        }
+
+        const visualIndex = i + childOffset / elementHeight;
+
+        let opacity = 1 - (visualIndex === 0 ? 0 : 0.1) - visualIndex * 0.2;
+        let scale = Math.min(1, 1 - (i + childOffset / elementHeight) * 0.2);
+
+        child.style.transform = `translateY(${childOffset}px) scale(${scale})`;
+        child.style.opacity = opacity;
+        child.style.animationDelay = `.${i}s`;
+      }
+    }
+
+    setStyles(0);
+  </script>
+</html>
