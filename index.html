@@ -8,7 +8,7 @@
   </head>
   <body>
     <img src="dummy.png" class="header" alt="" onclick="window.location.reload(true)" />
-    <div class="setup">Лучшее средство от диареи — это</div>
+    <div class="setup">Лучшее средство от диареи —<br />это</div>
     <div class="punchlines">
       <div class="punchline">хлорка</div>
       <div class="punchline">член</div>
@@ -19,16 +19,10 @@
       <div class="punchline">сквирт</div>
       <div class="punchline">расчленение</div>
       <div class="punchline">мои яйца</div>
+      <div class="punchline">Гитлер</div>
     </div>
   </body>
   <style>
-    @keyframes fly-in {
-      0% {
-        transform: translateY(50vh) scale(0);
-        opacity: 0;
-      }
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -37,26 +31,39 @@
       margin: 0;
       padding: 0;
       width: 100%;
+      height: 100vh;
       overscroll-behavior: none;
     }
 
     body {
       max-width: 400px;
-      max-height: 800px;
+      /* max-height: 800px; */
       margin: auto;
       padding: 32px;
+      height: 100%;
       font-family: sans-serif;
       font-weight: 300;
-      background-color: #131313;
+      background-color: #262626;
+      background-image: linear-gradient(
+        168deg,
+        rgba(0, 0, 0, 0.42) 0%,
+        #000 20%,
+        rgba(0, 0, 0, 0) 100%
+      );
       color: #f6f6f6;
       font-size: 48px;
       line-height: 1;
       overscroll-behavior: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex: auto;
     }
 
     .setup {
-      margin-bottom: 40px;
-      margin-top: 40px;
+      /* margin-bottom: 40px;
+      margin-top: 40px; */
       display: block;
     }
 
@@ -69,7 +76,6 @@
       user-select: none;
       transform-origin: top left;
       margin-bottom: 12px;
-      animation: fly-in 0.5s both;
     }
   </style>
   <script>
@@ -87,7 +93,7 @@
     const dragEventHandler = function (event) {
       const newOffsetY = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
       setStyles(newOffsetY);
-      speed = (event.changedTouches[0].clientY - lastTouchPosition) * 25;
+      speed = (event.changedTouches[0].clientY - lastTouchPosition) * 10;
       lastTouchPosition = event.changedTouches[0].clientY;
     };
 
@@ -101,24 +107,39 @@
     document.addEventListener("touchend", function (event) {
       document.removeEventListener("touchmove", dragEventHandler);
 
+      const snap = (from, to) => {
+        requestAnimationFrame(() => {
+          const speed = (to - from) / 2;
+          if (Math.abs(speed) > 0.05) {
+            const newFrom = from + speed;
+            setStyles(newFrom);
+            snap(newFrom, to);
+          } else {
+            if (to > containerHeight - elementHeight) {
+              to = to % containerHeight;
+            }
+            if (-to > containerHeight - elementHeight) {
+              to = to + containerHeight;
+            }
+            endDragPosition = to;
+            setStyles(to);
+          }
+        });
+      };
+
       const byInersia = () => {
         requestAnimationFrame(() => {
           const newOffsetY =
             event.changedTouches[0].clientY - initialOffsetY + endDragPosition - speed;
           setStyles(newOffsetY);
-          if (Math.abs(speed) > 0.5) {
+          if (Math.abs(speed) > 1) {
             speed *= 0.9;
             byInersia();
           } else {
             endDragPosition = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
-            if (endDragPosition > containerHeight - elementHeight) {
-              endDragPosition = endDragPosition % containerHeight;
-            }
-            if (-endDragPosition > containerHeight - elementHeight) {
-              endDragPosition = endDragPosition + containerHeight;
-            }
+
             endDragPosition = roundToelementHeight(endDragPosition);
-            setStyles(endDragPosition);
+            snap(newOffsetY, endDragPosition);
           }
         });
       };
@@ -135,6 +156,7 @@
         const child = children.item(i);
         const childPositionY = i * elementHeight + offset;
         let childOffset = offset;
+
         if (childPositionY >= containerHeight - elementHeight) {
           childOffset = childOffset - containerHeight;
         }
