@@ -7,7 +7,8 @@
     <title>Барабан</title>
   </head>
   <body>
-    <img src="dummy.png" class="header" alt="" onclick="window.location.reload(true)" />
+    <img src="dummy-timer.svg" class="header" alt="" />
+    <img src="dummy-players.svg" class="header" alt="" />
     <div class="setup">Лучшее средство от диареи —<br />это</div>
     <div class="punchlines">
       <div class="punchline">хлорка</div>
@@ -50,6 +51,13 @@
         #000 20%,
         rgba(0, 0, 0, 0) 100%
       );
+      background: linear-gradient(
+          168deg,
+          rgb(9 13 107 / 42%) 0%,
+          #000 21.95%,
+          rgb(0 2 64 / 10%) 100%
+        ),
+        #262626;
       color: #f6f6f6;
       font-size: 48px;
       line-height: 1;
@@ -69,7 +77,7 @@
 
     .punchlines {
       overflow: hidden;
-      max-height: 360px;
+      max-height: 300px;
     }
 
     .punchline {
@@ -89,15 +97,23 @@
     let endDragPosition = 0;
     let lastTouchPosition = 0;
     let speed = 0;
+    let isInterrupted = false;
 
     const dragEventHandler = function (event) {
       const newOffsetY = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
       setStyles(newOffsetY);
-      speed = (event.changedTouches[0].clientY - lastTouchPosition) * 10;
+      speed = (event.changedTouches[0].clientY - lastTouchPosition) * 20;
+      if (Math.abs(speed) < 50) {
+        speed = 0;
+      }
       lastTouchPosition = event.changedTouches[0].clientY;
     };
 
     container.addEventListener("touchstart", function (event) {
+      isInterrupted = true;
+      setTimeout(() => {
+        isInterrupted = false;
+      }, 50);
       initialOffsetY = event.touches[0].clientY;
       lastTouchPosition = initialOffsetY;
       event.preventDefault();
@@ -105,9 +121,14 @@
     });
 
     document.addEventListener("touchend", function (event) {
+      isInterrupted = false;
       document.removeEventListener("touchmove", dragEventHandler);
 
       const snap = (from, to) => {
+        if (isInterrupted) {
+          isInterrupted = false;
+          return;
+        }
         requestAnimationFrame(() => {
           const speed = (to - from) / 2;
           if (Math.abs(speed) > 0.05) {
@@ -128,16 +149,19 @@
       };
 
       const byInersia = () => {
+        if (isInterrupted) {
+          isInterrupted = false;
+          return;
+        }
         requestAnimationFrame(() => {
           const newOffsetY =
             event.changedTouches[0].clientY - initialOffsetY + endDragPosition - speed;
           setStyles(newOffsetY);
-          if (Math.abs(speed) > 1) {
-            speed *= 0.9;
+          if (Math.abs(speed) > 3) {
+            speed *= 0.95;
             byInersia();
           } else {
             endDragPosition = event.changedTouches[0].clientY - initialOffsetY + endDragPosition;
-
             endDragPosition = roundToelementHeight(endDragPosition);
             snap(newOffsetY, endDragPosition);
           }
@@ -168,8 +192,12 @@
 
         let opacity = 1 - (visualIndex === 0 ? 0 : 0.1) - visualIndex * 0.2;
         let scale = Math.min(1, 1 - (i + childOffset / elementHeight) * 0.2);
+        // let scale = 1 - (i + childOffset / elementHeight) * 0.2;
+        // if (scale > 1) {
+        //   scale = 0.6;
+        // }
 
-        child.style.transform = `translateY(${childOffset}px) scale(${scale})`;
+        child.style.transform = `translateY(${childOffset}px) scale(${Math.max(scale, 0.6)})`;
         child.style.opacity = opacity;
         child.style.animationDelay = `.${i}s`;
       }
